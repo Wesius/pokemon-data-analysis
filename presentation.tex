@@ -1,0 +1,368 @@
+\documentclass[aspectratio=169,12pt]{beamer}
+
+% Theme and colors
+\usetheme{Madrid}
+\usecolortheme{whale}
+\setbeamertemplate{navigation symbols}{}
+
+% Packages
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{siunitx}
+\usepackage{tikz}
+\usepackage{xcolor}
+
+% Custom colors
+\definecolor{pokered}{RGB}{255,0,0}
+\definecolor{pokeblue}{RGB}{0,102,204}
+
+% Graphics path
+\graphicspath{{output/}}
+
+% Helper command for including figures
+\newcommand{\includepng}[2][0.9\textwidth]{%
+  \IfFileExists{output/#2}{\includegraphics[width=#1]{output/#2}}{\fbox{\parbox{0.8\textwidth}{Missing figure: output/#2}}}%
+}
+
+\title{Pokémon Base Stat Analysis}
+\subtitle{A Comprehensive Data Science Study}
+\author{Wes Griffin \and Isa Wesolowski}
+\date{Period 3 \\ \today}
+
+\begin{document}
+
+% Title slide
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% Outline
+\begin{frame}{Outline}
+  \tableofcontents
+\end{frame}
+
+\section{Introduction and Research Questions}
+
+\begin{frame}{Research Overview}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \textbf{Primary Dataset}
+      \begin{itemize}
+        \item 1,025 Pokémon analyzed
+        \item 18 features per Pokémon
+        \item 9 generations covered
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{Key Questions}
+      \begin{itemize}
+        \item How do stats differ by generation?
+        \item Legendary vs Non-Legendary patterns?
+        \item Type strength analysis
+        \item Can we predict legendary status?
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\section{Dataset Overview}
+
+\begin{frame}{Generation Distribution}
+  \centering
+  \includepng[0.7\textwidth]{generation_counts.png}
+  
+  \begin{itemize}
+    \item Generation 1 (Kanto): 151 Pokémon
+    \item Consistent releases across generations
+    \item Total sample: 1,025 unique species
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Type Distribution by Generation}
+  \centering
+  \includepng[0.85\textwidth]{type_by_generation_heatmap.png}
+  
+  \small
+  Notable patterns: Water and Normal types dominate early generations
+\end{frame}
+
+\section{Base Stat Analysis}
+
+\begin{frame}{Base Stat Correlations}
+  \centering
+  \includepng[0.7\textwidth]{correlation_heatmap.png}
+  
+  \textbf{Key Findings:}
+  \begin{itemize}
+    \item Attack correlates strongly with Total (r=0.71)
+    \item Special Attack correlates with Total (r=0.70)
+    \item HP shows moderate correlation with defenses
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Attack vs Speed Trade-off}
+  \centering
+  \includepng[0.85\textwidth]{atk_speed_scatter.png}
+  
+  \small
+  Size represents total stats; reveals archetypal patterns
+\end{frame}
+
+\section{Legendary Analysis}
+
+\begin{frame}{Legendary vs Non-Legendary Stats}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \centering
+      \includepng[0.95\textwidth]{legendary_box_total.png}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{Statistical Differences:}
+      \begin{itemize}
+        \item Mean Total: 592.6 vs 411.2
+        \item 44.1\% higher stats overall
+        \item All differences significant (p < 0.001)
+      \end{itemize}
+      
+      \vspace{0.5cm}
+      \textbf{Sample Sizes:}
+      \begin{itemize}
+        \item Legendary/Mythical: 93
+        \item Non-Legendary: 932
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Legendary Share by Type}
+  \centering
+  \includepng[0.8\textwidth]{legendary_share_by_type.png}
+  
+  \textbf{Most likely legendary:} Flying (33.3\%), Psychic (32.1\%), Dragon (25.9\%)
+\end{frame}
+
+\section{Power Creep Analysis}
+
+\begin{frame}{Power Creep: Mean Stats by Generation}
+  \centering
+  \includepng[0.75\textwidth]{power_creep_mean_ci.png}
+  
+  \begin{itemize}
+    \item 53.7 point increase over 8 generations
+    \item Gen 4, 7, 9 show notable spikes
+    \item Error bars show 95\% confidence intervals
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Power Creep: Distribution View}
+  \centering
+  \includepng[0.75\textwidth]{power_creep_violin.png}
+  
+  Violin plots reveal changing stat distributions across generations
+\end{frame}
+
+\section{Type Analysis}
+
+\begin{frame}{Type Strength by Mean Total}
+  \begin{columns}
+    \begin{column}{0.6\textwidth}
+      \centering
+      \includepng[0.95\textwidth]{type_strength_mean_total.png}
+    \end{column}
+    \begin{column}{0.4\textwidth}
+      \textbf{Strongest Types:}
+      \begin{enumerate}
+        \item Dragon: 522.8
+        \item Steel: 491.6
+        \item Psychic: 461.3
+      \end{enumerate}
+      
+      \vspace{0.5cm}
+      \textbf{Weakest Types:}
+      \begin{enumerate}
+        \item Bug: 380.4
+        \item Poison: 399.6
+        \item Normal: 401.3
+      \end{enumerate}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Type Centroids: Offense vs Defense}
+  \centering
+  \includepng[0.8\textwidth]{type_centroids_off_vs_def.png}
+  
+  Dashed lines show overall averages; reveals type archetypes
+\end{frame}
+
+\begin{frame}{Defensive Vulnerability by Type}
+  \centering
+  \includepng[0.75\textwidth]{type_defensive_vulnerability.png}
+  
+  Lower values indicate better defensive typing
+\end{frame}
+
+\begin{frame}{Composite Type Strength}
+  \centering
+  \includepng[0.75\textwidth]{type_composite_strength.png}
+  
+  Combines offensive power and defensive resilience rankings
+\end{frame}
+
+\section{Advanced Analytics}
+
+\begin{frame}{PCA of Base Stats}
+  \centering
+  \includepng[0.75\textwidth]{pca_base_stats.png}
+  
+  \begin{itemize}
+    \item PC1 (44.1\%): Overall power level
+    \item PC2 (18.4\%): Offensive vs Defensive balance
+    \item Total variance explained: 62.5\%
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Role Distribution}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \centering
+      \includepng[0.9\textwidth]{role_tag_counts.png}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{Role Definitions:}
+      \begin{itemize}
+        \item \textbf{Sweeper}: High speed + offense
+        \item \textbf{Wall}: Top bulk + defense
+        \item \textbf{Attacker}: Offense-biased
+        \item \textbf{Tank}: Defense-biased
+        \item \textbf{Balanced}: Mixed stats
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\section{Physical Attributes}
+
+\begin{frame}{Height/Weight Correlations}
+  \centering
+  \includepng[0.7\textwidth]{height_weight_corr_heatmap.png}
+  
+  \textbf{Key Findings:}
+  \begin{itemize}
+    \item Height correlates most with Total (r=0.54) and HP (r=0.48)
+    \item Weight shows strongest correlation with Defense (r=0.42)
+    \item Minimal correlation with Speed (as expected)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Experience and Breeding}
+  \centering
+  \includepng[0.7\textwidth]{eggsteps_experience_corr_heatmap.png}
+  
+  Egg steps show weak correlations with combat stats
+\end{frame}
+
+\section{Machine Learning}
+
+\begin{frame}{Legendary Classification}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \centering
+      \includepng[0.9\textwidth]{legendary_clf_logit_cm.png}
+      
+      \textbf{Logistic Regression}
+      \begin{itemize}
+        \item Accuracy: 94.5\%
+        \item Precision: 76.9\%
+        \item Recall: 55.6\%
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \centering
+      \includepng[0.9\textwidth]{legendary_clf_rf_cm.png}
+      
+      \textbf{Random Forest}
+      \begin{itemize}
+        \item Accuracy: 95.0\%
+        \item Precision: 90.0\%
+        \item Recall: 50.0\%
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\section{Dream Team}
+
+\begin{frame}{Dream Team Selection}
+  \centering
+  \includepng[0.85\textwidth]{dream_team_radars.png}
+  
+  \textbf{Selection Criteria:} Total + 0.5×Offense + 0.3×Speed, with type diversity
+\end{frame}
+
+\begin{frame}{Dream Team Composition}
+  \begin{center}
+    \begin{tabular}{lcccc}
+      \toprule
+      Pokémon & Type & Total & Offense & Speed \\
+      \midrule
+      Mewtwo & Psychic & 680 & 154.0 & 130 \\
+      Rayquaza & Dragon & 680 & 150.0 & 95 \\
+      Groudon & Ground & 670 & 130.0 & 90 \\
+      Kyogre & Water & 670 & 150.0 & 90 \\
+      Arceus & Normal & 720 & 120.0 & 120 \\
+      Diancie & Rock & 600 & 140.0 & 50 \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  
+  \vspace{0.5cm}
+  \textbf{Team Statistics:}
+  \begin{itemize}
+    \item Average Total: 753.3
+    \item Average Offense Index: 160.3
+    \item Type Diversity: 6/6 unique primary types
+  \end{itemize}
+\end{frame}
+
+\section{Conclusions}
+
+\begin{frame}{Key Findings}
+  \begin{enumerate}
+    \item \textbf{Legendary Dominance:} 44\% higher stats than non-legendary
+    \item \textbf{Power Creep:} Modest but visible across generations
+    \item \textbf{Type Hierarchy:} Dragon, Steel, Psychic consistently strong
+    \item \textbf{Predictability:} 95\% accuracy in legendary classification
+    \item \textbf{Physical Correlations:} Size relates to bulk, not speed
+    \item \textbf{Archetypes:} Most Pokémon are balanced; extremes are rare
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Limitations and Future Work}
+  \textbf{Limitations:}
+  \begin{itemize}
+    \item Missing secondary types for ~50\% of entries
+    \item No mega evolutions or alternate forms
+    \item Static analysis (no battle outcomes)
+  \end{itemize}
+  
+  \vspace{0.5cm}
+  \textbf{Future Directions:}
+  \begin{itemize}
+    \item Incorporate move sets and abilities
+    \item Model competitive viability
+    \item Time-series analysis of meta shifts
+    \item Network analysis of type relationships
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[standout]
+  \centering
+  \Huge Thank You!
+  
+  \vspace{1cm}
+  \Large Questions?
+\end{frame}
+
+\end{document}

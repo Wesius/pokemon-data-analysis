@@ -1,0 +1,273 @@
+\documentclass[11pt]{article}
+
+% Page layout and typography
+\usepackage[margin=1in]{geometry}
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% Figures, tables, math, and utilities
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{siunitx}
+\usepackage{float}
+\usepackage{enumitem}
+
+% Hyperlinks and colors
+\usepackage{xcolor}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  citecolor=blue
+}
+
+% Helper to include figures only if they exist (avoids LaTeX errors when images are not yet generated)
+\newcommand{\includepng}[2][0.9\textwidth]{%
+  \IfFileExists{#2}{\includegraphics[width=#1]{#2}}{\fbox{\parbox{0.8\textwidth}{Missing figure (run the notebook to generate images in \texttt{output/}).}}}%
+}
+
+\title{Pokémon Base Stat Analysis and Visual Storytelling}
+\author{Wes Griffin \and Isa Wesolowski}
+\date{Period 3 \quad \today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+ßWe analyze base stats for \(1{,}025\) Pokémon from Kaggle, quantifying differences across generations and between Legendary/Mythical and Non-Legendary cohorts. We observe substantially higher total stats for the Legendary/Mythical cohort and modest evidence of generation-specific shifts. We close with limitations and directions for future work.
+\end{abstract}
+
+\section*{Research Questions}
+We study two complementary Kaggle datasets to answer the following:
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Dataset A (1,025 Pokémon).} How do base stats differ across generations and between Legendary/Mythical and Non-Legendary Pokémon, and what patterns emerge across primary/secondary types? We quantify correlations, cohort differences, and potential power creep across eras, and design informative visualizations (\autoref{fig:counts}, \autoref{fig:corr}, \autoref{fig:legendary}, \autoref{fig:power-mean}, \autoref{fig:power-violin}).
+  \item \textbf{Dataset B (Rounak Banik).} Inspired by the dataset author's prompts, we investigate:
+  \begin{enumerate}[label=\alph*)]
+    \item Is it possible to build a classifier to identify legendary Pokémon? (\autoref{fig:legendary-logit}, \autoref{fig:legendary-rf})
+    \item How do height and weight correlate with base stats? (\autoref{fig:hw-corr})
+    \item What factors relate to Experience Growth and Egg Steps? Are they correlated with other attributes?
+    \item Which primary type is strongest overall, and which is weakest? (\autoref{fig:type-strength}, \autoref{fig:type-def}, \autoref{fig:type-composite})
+    \item Which primary type is most likely to be legendary? (\autoref{fig:legendary-by-type})
+    \item Can we construct a ``dream team'' of six Pokémon that maximizes offensive power while remaining resilient? (\autoref{fig:dream-team})
+  \end{enumerate}
+\end{enumerate}
+
+\section*{Methods}
+\subsection*{Datasets}
+Primary dataset: \emph{Data of 1,025 Pokémons} (Kaggle).\\
+\textbf{Source:} hamzacyberpatcher / Data of 1010 Pokémons\\
+\textbf{URL:} \url{https://www.kaggle.com/datasets/hamzacyberpatcher/data-of-1010-pokemons}\\
+\textbf{Access date:} \today\\
+\textbf{License:} See dataset page for licensing terms.
+
+Secondary dataset: \emph{Pokemon} (Kaggle).\\
+\textbf{Source:} rounakbanik / Pokemon\\
+\textbf{URL:} \url{https://www.kaggle.com/datasets/rounakbanik/pokemon}\\
+\textbf{Access date:} \today\\
+\textbf{License:} See dataset page for licensing terms.
+
+\paragraph{Key columns} id, name, rank, generation, evolves\_from, type1, type2, hp, atk, def, spatk, spdef, speed, total, height, weight, abilities, desc.
+
+\paragraph{Limitations} type2 is missing for many entries; descriptions for some Pokémon are unavailable or abbreviated. No mega evolutions are included per dataset notes.
+
+\subsection*{Data Hygiene}
+\textbf{Dataset A.} We standardize fields and construct analysis helpers: (i) map generation strings to numeric (\texttt{generation\_num}); (ii) normalize \texttt{rank} to lowercase and flag \texttt{is\_legendary} (Legendary or Mythical) and \texttt{is\_baby}; (iii) preserve \texttt{type2} and add \texttt{type2\_filled}=``none'' where missing; (iv) audit missingness and duplicates (none in \texttt{id}, \texttt{type2} is the only sparse field). We also cast common categoricals and keep original text columns for later reporting.
+
+\textbf{Dataset B.} We align naming conventions (e.g., \texttt{attack}\,$\to$\,\texttt{atk}, \texttt{sp\_attack}\,$\to$\,\texttt{spatk}, \texttt{pokedex\_number}\,$\to$\,\texttt{id}), compute \texttt{total} if absent, and ensure booleans for \texttt{is\_legendary}. When provided, we keep metric units (\texttt{height\_m}, \texttt{weight\_kg}) and the type-effectiveness columns \texttt{against\_*}.
+
+\subsection*{Feature Engineering}
+Guided by competitive archetypes and interpretability, we define:
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Offense Index} \((\texttt{atk}+\texttt{spatk})/2\) and \textbf{Defense Index} \((\texttt{def}+\texttt{spdef})/2\) to summarize attacking and defensive prowess.
+  \item \textbf{Speed-to-Power Ratio} \(\texttt{speed}/\texttt{total}\) to capture glass-cannon vs bulky tendencies.
+  \item \textbf{Era Index} (\texttt{era\_total\_z}): z-score of \texttt{total} within each generation for cross-era comparability.
+  \item \textbf{BMI-like} using \texttt{weight\_kg}/\texttt{height\_m}\(^2\) (Dataset B) as a rough physicality indicator.
+  \item \textbf{Bulk Index} \(\sqrt{\texttt{hp}\cdot\texttt{def}\cdot\texttt{spdef}}\) to reflect survivability.
+  \item \textbf{Offense Bias} \(\frac{\texttt{offense}-\texttt{defense}}{\texttt{offense}+\texttt{defense}}\) to position Pokémon on an offense--defense spectrum.
+  \item \textbf{Role Tags} (heuristics): \emph{sweeper} (high speed and offense), \emph{wall} (top-quintile bulk and solid defenses), \emph{attacker} (offense-biased), \emph{tank} (defense-biased), else \emph{balanced}. See \autoref{fig:roles}.
+\end{itemize}
+
+\subsection*{Modeling and Evaluation (Dataset B)}
+For legendary classification we use scikit-learn pipelines with a \texttt{ColumnTransformer} (numeric passthrough, one-hot for types/generation), splitting data with stratified 75/25 train/test. We train (i) logistic regression (max\_iter=1000) and (ii) a random forest (n=400, fixed seed). We report precision/recall/F1 and confusion matrices (\autoref{fig:legendary-logit}, \autoref{fig:legendary-rf}).
+
+For type strength, we compute (i) mean \texttt{total} by primary type and (ii) average defensive vulnerability using \texttt{against\_*} multipliers; we combine their ranks into a composite score (\autoref{fig:type-strength}, \autoref{fig:type-def}, \autoref{fig:type-composite}). Height/weight relationships and egg-step analyses use correlation heatmaps and regression plots (\autoref{fig:hw-corr}).
+
+For the dream team, we apply a greedy heuristic: sort by a composite score \texttt{total + 0.5*offense\_index + 0.3*speed} while enforcing diverse primary types; visualize profiles with radar small multiples (\autoref{fig:dream-team}).
+
+\section*{Findings}
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Type and Generation Composition.} Counts by generation and type show distributional differences across eras.
+  \item \textbf{Correlations.} Base stats show expected relationships; \texttt{total} correlates strongly with component stats.
+  \item \textbf{Legendary vs Non-Legendary.} Legendary/Mythical Pokémon have substantially higher \texttt{total} (and component stats); Welch t-tests confirm significant differences.
+  \item \textbf{Trade-offs.} An Attack--Speed scatter suggests archetypal trade-offs, with notable outliers (fast glass cannons vs bulky walls).
+  \item \textbf{Profiles.} Radar charts visualize holistic stat profiles for top-total Pokémon.
+  \item \textbf{Legendary Classification (Secondary Dataset).} Baseline models (logistic regression, random forest) achieve strong separation using base stats and engineered features; see confusion matrices.
+  \item \textbf{Height/Weight vs Stats.} Height and weight show modest positive relationships with bulk-related stats; correlations visualized.
+  \item \textbf{Experience Growth and Egg Steps.} Egg steps have weak-to-moderate associations with base stats; experience growth is categorical and unevenly distributed.
+  \item \textbf{Type Strength.} Types ranked by mean total; when type-effectiveness columns are used, a composite of power and defensive vulnerability identifies strongest/weakest types.
+  \item \textbf{Legendary by Type.} Certain primary types have higher legendary shares.
+  \item \textbf{Dream Team Heuristic.} A greedy selection balancing total, offense, and speed with diverse primary types yields a strong team.
+\end{itemize}
+
+\section*{Results and Discussion}
+\textbf{Dataset A.} Composition varies across eras (\autoref{fig:counts}); base stats are mutually reinforcing (\autoref{fig:corr}). Legendary/Mythical Pokémon dominate \texttt{total} (\autoref{fig:legendary}), with cohort means exceeding non-legendary by \(\approx\)100--150 points across most components. Power creep is modest but visible: later generations show slightly higher means and heavier upper tails (\autoref{fig:power-mean}, \autoref{fig:power-violin}). Type centroids in offense/defense space reveal archetypes; e.g., \emph{Dragon} and \emph{Steel} cluster toward high composite power, while \emph{Bug} and \emph{Normal} sit lower. PCA indicates that two axes explain much of the variance, roughly aligned with (i) overall power and (ii) offense vs defense balance (\autoref{fig:pca}). Derived role tags indicate a long tail of balanced designs with fewer extreme sweepers/walls (\autoref{fig:roles}).
+
+\textbf{Dataset B.} Baseline legendary classifiers separate classes effectively (\autoref{fig:legendary-logit}, \autoref{fig:legendary-rf}). Logistic regression and random forest both achieve high accuracy and F1, driven largely by \texttt{total} and its components; type one-hot features add marginal gains. Height/weight correlate weakly-to-moderately with bulk-related stats (positive with \texttt{hp}, \texttt{def}, \texttt{spdef}; near-zero with \texttt{speed}), consistent with physical intuition (\autoref{fig:hw-corr}). Egg steps exhibit weak associations with base stats and likely encode breeding design, not combat power. Type strength by mean \texttt{total} ranks \emph{Dragon}, \emph{Steel}, and \emph{Psychic} higher; defensive vulnerability highlights resistive types (e.g., \emph{Steel}) and penalizes frail ones (e.g., \emph{Ice}) (\autoref{fig:type-strength}, \autoref{fig:type-def}). The composite captures types that are both powerful and resilient (\autoref{fig:type-composite}). Legendary prevalence varies by type, with higher shares among \emph{Dragon} and \emph{Psychic} and lower among \emph{Bug} and \emph{Normal} (\autoref{fig:legendary-by-type}), though counts are small for some categories. The greedy dream team balances offense and speed while maintaining type diversity and strong bulk profiles (\autoref{fig:dream-team}).
+
+\section*{Visuals}
+All figures referenced in the text are included below. Assets are exported by the notebook to \texttt{output/} and linked via their labels.
+
+
+\begin{figure}[H]
+  \centering
+  \includepng[0.6\textwidth]{output/legendary_clf_logit_cm.png}
+  \caption{Legendary classifier (logistic regression) confusion matrix.}
+  \label{fig:legendary-logit}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includepng[0.6\textwidth]{output/legendary_clf_rf_cm.png}
+  \caption{Legendary classifier (random forest) confusion matrix.}
+  \label{fig:legendary-rf}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includepng{output/height_weight_corr_heatmap.png}
+  \caption{Correlation heatmap: height/weight and base stats.}
+  \label{fig:hw-corr}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includepng{output/type_strength_mean_total.png}
+  \caption{Mean total by primary type (secondary dataset).}
+  \label{fig:type-strength}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includepng{output/type_defensive_vulnerability.png}
+  \caption{Average defensive vulnerability by primary type (lower is better).}
+  \label{fig:type-def}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includepng{output/type_composite_strength.png}
+  \caption{Composite type strength combining power and defensive vulnerability.}
+  \label{fig:type-composite}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includepng[0.8\textwidth]{output/legendary_share_by_type.png}
+  \caption{Legendary share by primary type.}
+  \label{fig:legendary-by-type}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includepng{output/dream_team_radars.png}
+  \caption{Dream team stat profiles (heuristic selection).}
+  \label{fig:dream-team}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includepng{output/generation_counts.png}
+  \caption{Pokémon counts by generation.}
+  \label{fig:counts}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includepng{output/type_by_generation_heatmap.png}
+  \caption{Primary type by generation (counts).}
+  \label{fig:type-by-generation}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includepng{output/correlation_heatmap.png}
+  \caption{Correlation heatmap of base stats.}
+  \label{fig:corr}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includepng{output/legendary_box_total.png}
+  \caption{Total stat distribution: Legendary/Mythical vs Non-Legendary.}
+  \label{fig:legendary}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includepng{output/atk_speed_scatter.png}
+  \caption{Attack vs Speed by primary type (size = total) with annotations.}
+  \label{fig:scatter}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  % If exported, include the radar image below
+  % \includepng[0.7\textwidth]{output/radar_top_total.png}
+  \caption{Radar chart of base stats for top-total Pokémon.}
+  \label{fig:radar}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includepng{output/power_creep_mean_ci.png}
+  \caption{Mean total by generation with 95\% confidence intervals.}
+  \label{fig:power-mean}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includepng{output/power_creep_violin.png}
+  \caption{Distribution of total by generation (violin with quartiles).}
+  \label{fig:power-violin}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includepng{output/type_centroids_off_vs_def.png}
+  \caption{Primary-type centroids in offense vs defense space.}
+  \label{fig:type-centroids}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includepng{output/pca_base_stats.png}
+  \caption{PCA of base stats colored by primary type and shaped by legendary status.}
+  \label{fig:pca}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includepng[0.7\textwidth]{output/role_tag_counts.png}
+  \caption{Counts of derived role tags.}
+  \label{fig:roles}
+\end{figure}
+
+\section*{Limitations and Future Work}
+Key limitations include missing secondary types for roughly half the entries in Dataset A and potential dataset omissions (e.g., mega evolutions). Dataset B blends stat and effectiveness data but inherits scraping noise and categorical conventions (e.g., experience growth groups). Future work: (i) incorporate complete type-effectiveness matrices and movesets; (ii) model power creep with hierarchical time-aware models; (iii) expand role-tagging with clustering; (iv) optimize dream-team selection with integer programming under coverage and synergy constraints.
+
+\section*{Reproducibility}
+Code is provided in the notebook (\texttt{main.ipynb}). Figures and tables are saved programmatically to \texttt{output/}. Environment: Python \\texttt{>= 3.12} with \texttt{pandas}, \texttt{seaborn}, \texttt{matplotlib}, \texttt{scikit-learn}, and \texttt{scipy}. To set up the environment, run \texttt{uv sync}. To regenerate figures, execute the notebook top-to-bottom; this will populate \texttt{output/} and enable LaTeX to include the images referenced in this paper.
+
+\section*{References}
+\begin{enumerate}[leftmargin=*]
+  \item hamzacyberpatcher. \emph{Data of 1010 Pokémons}. Kaggle. Available at: \url{https://www.kaggle.com/datasets/hamzacyberpatcher/data-of-1010-pokemons}. Accessed: \today.
+  \item Rounak Banik. \emph{Pokemon}. Kaggle. Available at: \url{https://www.kaggle.com/datasets/rounakbanik/pokemon}. Accessed: \today.
+\end{enumerate}
+
+\end{document}
+
+
