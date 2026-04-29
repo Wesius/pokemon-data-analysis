@@ -38,8 +38,11 @@
 \maketitle
 
 \begin{abstract}
-ßWe analyze base stats for \(1{,}025\) Pokémon from Kaggle, quantifying differences across generations and between Legendary/Mythical and Non-Legendary cohorts. We observe substantially higher total stats for the Legendary/Mythical cohort and modest evidence of generation-specific shifts. We close with limitations and directions for future work.
+We analyze base stats for \(1{,}025\) Pokémon from Kaggle, quantifying differences across generations and between Legendary/Mythical and Non-Legendary cohorts. We observe substantially higher total stats for the Legendary/Mythical cohort and modest evidence of generation-specific shifts. We close with limitations and directions for future work.
 \end{abstract}
+
+\section*{Introduction}
+Pokémon designs have evolved across nine generations, blending archetypes (sweepers, walls, generalists) and type identities. Our goal is to tell a concise, visual story about how base stats vary across eras and types, how rarity (Legendary/Mythical) relates to power, and what simple models can learn from these attributes. We move through the results as a sequence of questions: who is in the dataset, how stats relate, where trade-offs appear, whether there is evidence of power creep, and which types stand out. Each plot is introduced with a short motivation and followed by a key takeaway.
 
 \section*{Research Questions}
 We study two complementary Kaggle datasets to answer the following:
@@ -98,163 +101,155 @@ For type strength, we compute (i) mean \texttt{total} by primary type and (ii) a
 
 For the dream team, we apply a greedy heuristic: sort by a composite score \texttt{total + 0.5*offense\_index + 0.3*speed} while enforcing diverse primary types; visualize profiles with radar small multiples (\autoref{fig:dream-team}).
 
-\section*{Findings}
-\begin{itemize}[leftmargin=*]
-  \item \textbf{Type and Generation Composition.} Counts by generation and type show distributional differences across eras.
-  \item \textbf{Correlations.} Base stats show expected relationships; \texttt{total} correlates strongly with component stats.
-  \item \textbf{Legendary vs Non-Legendary.} Legendary/Mythical Pokémon have substantially higher \texttt{total} (and component stats); Welch t-tests confirm significant differences.
-  \item \textbf{Trade-offs.} An Attack--Speed scatter suggests archetypal trade-offs, with notable outliers (fast glass cannons vs bulky walls).
-  \item \textbf{Profiles.} Radar charts visualize holistic stat profiles for top-total Pokémon.
-  \item \textbf{Legendary Classification (Secondary Dataset).} Baseline models (logistic regression, random forest) achieve strong separation using base stats and engineered features; see confusion matrices.
-  \item \textbf{Height/Weight vs Stats.} Height and weight show modest positive relationships with bulk-related stats; correlations visualized.
-  \item \textbf{Experience Growth and Egg Steps.} Egg steps have weak-to-moderate associations with base stats; experience growth is categorical and unevenly distributed.
-  \item \textbf{Type Strength.} Types ranked by mean total; when type-effectiveness columns are used, a composite of power and defensive vulnerability identifies strongest/weakest types.
-  \item \textbf{Legendary by Type.} Certain primary types have higher legendary shares.
-  \item \textbf{Dream Team Heuristic.} A greedy selection balancing total, offense, and speed with diverse primary types yields a strong team.
-\end{itemize}
-
 \section*{Results and Discussion}
-\textbf{Dataset A.} Composition varies across eras (\autoref{fig:counts}); base stats are mutually reinforcing (\autoref{fig:corr}). Legendary/Mythical Pokémon dominate \texttt{total} (\autoref{fig:legendary}), with cohort means exceeding non-legendary by \(\approx\)100--150 points across most components. Power creep is modest but visible: later generations show slightly higher means and heavier upper tails (\autoref{fig:power-mean}, \autoref{fig:power-violin}). Type centroids in offense/defense space reveal archetypes; e.g., \emph{Dragon} and \emph{Steel} cluster toward high composite power, while \emph{Bug} and \emph{Normal} sit lower. PCA indicates that two axes explain much of the variance, roughly aligned with (i) overall power and (ii) offense vs defense balance (\autoref{fig:pca}). Derived role tags indicate a long tail of balanced designs with fewer extreme sweepers/walls (\autoref{fig:roles}).
+We proceed as a sequence of short questions, each paired with a figure. This interleaved format emphasizes concrete takeaways over exhaustive tables.
 
-\textbf{Dataset B.} Baseline legendary classifiers separate classes effectively (\autoref{fig:legendary-logit}, \autoref{fig:legendary-rf}). Logistic regression and random forest both achieve high accuracy and F1, driven largely by \texttt{total} and its components; type one-hot features add marginal gains. Height/weight correlate weakly-to-moderately with bulk-related stats (positive with \texttt{hp}, \texttt{def}, \texttt{spdef}; near-zero with \texttt{speed}), consistent with physical intuition (\autoref{fig:hw-corr}). Egg steps exhibit weak associations with base stats and likely encode breeding design, not combat power. Type strength by mean \texttt{total} ranks \emph{Dragon}, \emph{Steel}, and \emph{Psychic} higher; defensive vulnerability highlights resistive types (e.g., \emph{Steel}) and penalizes frail ones (e.g., \emph{Ice}) (\autoref{fig:type-strength}, \autoref{fig:type-def}). The composite captures types that are both powerful and resilient (\autoref{fig:type-composite}). Legendary prevalence varies by type, with higher shares among \emph{Dragon} and \emph{Psychic} and lower among \emph{Bug} and \emph{Normal} (\autoref{fig:legendary-by-type}), though counts are small for some categories. The greedy dream team balances offense and speed while maintaining type diversity and strong bulk profiles (\autoref{fig:dream-team}).
-
-\section*{Visuals}
-All figures referenced in the text are included below. Assets are exported by the notebook to \texttt{output/} and linked via their labels.
-
-
-\begin{figure}[H]
-  \centering
-  \includepng[0.6\textwidth]{output/legendary_clf_logit_cm.png}
-  \caption{Legendary classifier (logistic regression) confusion matrix.}
-  \label{fig:legendary-logit}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includepng[0.6\textwidth]{output/legendary_clf_rf_cm.png}
-  \caption{Legendary classifier (random forest) confusion matrix.}
-  \label{fig:legendary-rf}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includepng{output/height_weight_corr_heatmap.png}
-  \caption{Correlation heatmap: height/weight and base stats.}
-  \label{fig:hw-corr}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includepng{output/type_strength_mean_total.png}
-  \caption{Mean total by primary type (secondary dataset).}
-  \label{fig:type-strength}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includepng{output/type_defensive_vulnerability.png}
-  \caption{Average defensive vulnerability by primary type (lower is better).}
-  \label{fig:type-def}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includepng{output/type_composite_strength.png}
-  \caption{Composite type strength combining power and defensive vulnerability.}
-  \label{fig:type-composite}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includepng[0.8\textwidth]{output/legendary_share_by_type.png}
-  \caption{Legendary share by primary type.}
-  \label{fig:legendary-by-type}
-\end{figure}
-
-\begin{figure}[H]
-  \centering
-  \includepng{output/dream_team_radars.png}
-  \caption{Dream team stat profiles (heuristic selection).}
-  \label{fig:dream-team}
-\end{figure}
-
+\paragraph{Who is in the dataset?} We start with composition by generation and type to anchor later comparisons.
 \begin{figure}[H]
   \centering
   \includepng{output/generation_counts.png}
   \caption{Pokémon counts by generation.}
   \label{fig:counts}
 \end{figure}
-
 \begin{figure}[H]
   \centering
   \includepng{output/type_by_generation_heatmap.png}
   \caption{Primary type by generation (counts).}
   \label{fig:type-by-generation}
 \end{figure}
+\textbf{Takeaway.} The dataset spans all eras with varying type mixes across generations, reflecting design shifts (e.g., more Steel and Dark after their introduction).
 
+\paragraph{How do base stats relate?} Correlations summarize how components contribute to overall power.
 \begin{figure}[H]
   \centering
   \includepng{output/correlation_heatmap.png}
   \caption{Correlation heatmap of base stats.}
   \label{fig:corr}
 \end{figure}
+\textbf{Takeaway.} \texttt{total} tracks all components strongly; offense and defense pairs are moderately correlated, while \texttt{speed} is more distinct.
 
+\paragraph{Are Legendary/Mythical Pokémon stronger?} We compare distributions of \texttt{total}.
 \begin{figure}[H]
   \centering
   \includepng{output/legendary_box_total.png}
   \caption{Total stat distribution: Legendary/Mythical vs Non-Legendary.}
   \label{fig:legendary}
 \end{figure}
+\textbf{Takeaway.} Legendary/Mythical Pokémon concentrate at substantially higher \texttt{total} with heavier upper tails.
 
+\paragraph{Where are trade-offs visible?} Attack vs Speed illustrates archetypes and outliers.
 \begin{figure}[H]
   \centering
   \includepng{output/atk_speed_scatter.png}
   \caption{Attack vs Speed by primary type (size = total) with annotations.}
   \label{fig:scatter}
 \end{figure}
+\textbf{Takeaway.} A frontier of fast glass-cannons and slower heavy-hitters emerges, with type-specific clusters.
 
-\begin{figure}[H]
-  \centering
-  % If exported, include the radar image below
-  % \includepng[0.7\textwidth]{output/radar_top_total.png}
-  \caption{Radar chart of base stats for top-total Pokémon.}
-  \label{fig:radar}
-\end{figure}
-
+\paragraph{Has power increased over time?} We inspect means with confidence intervals and full distributions by generation.
 \begin{figure}[H]
   \centering
   \includepng{output/power_creep_mean_ci.png}
   \caption{Mean total by generation with 95\% confidence intervals.}
   \label{fig:power-mean}
 \end{figure}
-
 \begin{figure}[H]
   \centering
   \includepng{output/power_creep_violin.png}
   \caption{Distribution of total by generation (violin with quartiles).}
   \label{fig:power-violin}
 \end{figure}
+\textbf{Takeaway.} Power creep is modest but present: later generations show slightly higher means and heavier upper tails.
 
+\paragraph{What archetypes do types embody?} Averaging offense and defense indices by primary type reveals strategic identities.
 \begin{figure}[H]
   \centering
   \includepng{output/type_centroids_off_vs_def.png}
   \caption{Primary-type centroids in offense vs defense space.}
   \label{fig:type-centroids}
 \end{figure}
+\textbf{Takeaway.} \emph{Dragon} and \emph{Steel} skew toward high composite power; \emph{Bug} and \emph{Normal} trend lower.
 
+\paragraph{Can two dimensions summarize most variation?} A PCA view contextualizes overall power and offense/defense balance.
 \begin{figure}[H]
   \centering
   \includepng{output/pca_base_stats.png}
   \caption{PCA of base stats colored by primary type and shaped by legendary status.}
   \label{fig:pca}
 \end{figure}
+\textbf{Takeaway.} The first axis tracks overall power; the second separates offense- and defense-biased designs, with legendaries occupying the high-power region.
 
+\paragraph{Which roles are common?} Heuristic role tags illustrate population mix across tactical archetypes.
 \begin{figure}[H]
   \centering
   \includepng[0.7\textwidth]{output/role_tag_counts.png}
   \caption{Counts of derived role tags.}
   \label{fig:roles}
 \end{figure}
+\textbf{Takeaway.} Balanced designs dominate; extreme sweepers and walls are comparatively rare.
+
+\paragraph{How do height and weight relate to stats?} On the secondary dataset, physical attributes correlate differently with components.
+\begin{figure}[H]
+  \centering
+  \includepng{output/height_weight_corr_heatmap.png}
+  \caption{Correlation heatmap: height/weight and base stats.}
+  \label{fig:hw-corr}
+\end{figure}
+\textbf{Takeaway.} Height/weight correlate positively with bulk-related stats and are near-zero for \texttt{speed}.
+
+\paragraph{Which types are strongest and most resilient?} We examine mean power, defensive vulnerability, and their composite.
+\begin{figure}[H]
+  \centering
+  \includepng{output/type_strength_mean_total.png}
+  \caption{Mean total by primary type (secondary dataset).}
+  \label{fig:type-strength}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \includepng{output/type_defensive_vulnerability.png}
+  \caption{Average defensive vulnerability by primary type (lower is better).}
+  \label{fig:type-def}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \includepng{output/type_composite_strength.png}
+  \caption{Composite type strength combining power and defensive vulnerability.}
+  \label{fig:type-composite}
+\end{figure}
+\textbf{Takeaway.} Types like \emph{Dragon}, \emph{Steel}, and \emph{Psychic} rank highly on power; defensive resilience elevates \emph{Steel} in the composite.
+
+\paragraph{Which types are more likely to be legendary?}
+\begin{figure}[H]
+  \centering
+  \includepng[0.8\textwidth]{output/legendary_share_by_type.png}
+  \caption{Legendary share by primary type.}
+  \label{fig:legendary-by-type}
+\end{figure}
+\textbf{Takeaway.} \emph{Dragon} and \emph{Psychic} have higher legendary prevalence; \emph{Bug} and \emph{Normal} lower, with small counts in some categories.
+
+\paragraph{Can we identify legendaries from stats?} Simple models capture much of the signal.
+\begin{figure}[H]
+  \centering
+  \includepng[0.6\textwidth]{output/legendary_clf_logit_cm.png}
+  \caption{Legendary classifier (logistic regression) confusion matrix.}
+  \label{fig:legendary-logit}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \includepng[0.6\textwidth]{output/legendary_clf_rf_cm.png}
+  \caption{Legendary classifier (random forest) confusion matrix.}
+  \label{fig:legendary-rf}
+\end{figure}
+\textbf{Takeaway.} Logistic regression and random forest separate classes well; \texttt{total} and its components dominate feature importance.
+
+\paragraph{Can we build a strong, diverse team?} A greedy heuristic balances power, offense, speed, and type diversity.
+\begin{figure}[H]
+  \centering
+  \includepng{output/dream_team_radars.png}
+  \caption{Dream team stat profiles (heuristic selection).}
+  \label{fig:dream-team}
+\end{figure}
+\textbf{Takeaway.} Enforcing type diversity while scoring power and speed yields a robust lineup with complementary profiles.
 
 \section*{Limitations and Future Work}
 Key limitations include missing secondary types for roughly half the entries in Dataset A and potential dataset omissions (e.g., mega evolutions). Dataset B blends stat and effectiveness data but inherits scraping noise and categorical conventions (e.g., experience growth groups). Future work: (i) incorporate complete type-effectiveness matrices and movesets; (ii) model power creep with hierarchical time-aware models; (iii) expand role-tagging with clustering; (iv) optimize dream-team selection with integer programming under coverage and synergy constraints.

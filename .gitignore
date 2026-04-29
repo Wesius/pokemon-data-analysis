@@ -1,13 +1,56 @@
-paper/
-output/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtualenvs
 .venv/
-.ruff_cache/
-.vscode/
+venv/
+env/
+ENV/
+
+# Jupyter
 .ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Tools / cache
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.claude/
+
+# OS
 .DS_Store
+Thumbs.db
+
+# LaTeX intermediates
+*.aux
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# Secrets
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.development
+.env.*
+!.env.example
+*.key
+*.pem
